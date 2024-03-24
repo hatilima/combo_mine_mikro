@@ -7,7 +7,23 @@ OC		= $(CROSS_COMPILER)objcopy
 OD		= $(CROSS_COMPILER)objdump
 SZ		= $(CROSS_COMPILER)size
 
+CFLAGS	= 	-c -fno-common \
+			-ffunction-sections \
+			-fdata-sections \
+			-g3 \
+			-mcpu=cortex-m3 \
+			-mthumb \
+			-Wall
+
+LDSCRIPT= ld/stm32f103.ld
+
+LDFLAGS	=	--gc-sections,-T$(LDSCRIPT),-no-startup,-nostdlib
+
+OCFLAGS	=	-Obinary
+
 ODFLAGS	=	-S
+
+
 TARGET = main
 
 .PHONY: clean all
@@ -24,11 +40,9 @@ main.bin: main.elf
 	$(OC) -O binary main.elf main.bin
 main.elf: main.o startup.o
 	$(LD) -T stm32f103.ld -o main.elf startup.o main.o
-main.o: main.c
-	$(CC) -mcpu=cortex-m3 -mthumb -Wall -g -nostartfiles -std=c99 -c main.c -o main.o
-startup.o: startup.c
-	$(CC) -mcpu=cortex-m3 -mthumb -Wall -g -nostartfiles -std=c99 -c startup.c -o startup.o
-
+%.o: %.c
+	@echo "  CC $<"
+	$(CC) $(CFLAGS) $< -o $*.o
 clean:
 	@echo "Removing files..."
-	rm -rf *.o *.bin *.elf
+	rm -rf *.o *.bin *.elf *.lst
